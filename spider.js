@@ -58,7 +58,7 @@ Spider.prototype.getPostList = async function() {
 	}
 	return {
 		success: true,
-		list: self.contentUrl
+		list: this.contentUrl
 	}
 }
 //获取分页的内容
@@ -108,17 +108,17 @@ Spider.prototype.getPost = async function(){
 	let postPage = {}
 	for (let i = 0; i < list.length; i++) {
 		await this.fetch(list[i]).then(function($) {
-			isPage = $(self.config.imagePage) ? true : false
-			title = $(self.config.contentSelector.title).text()
-			content = $(self.config.contentSelector.content).html()
+			isPage = $(self.config.isPage) ? true : false
+			title = $(self.config.title).text()
+			content = $(self.config.content).html()
 			imageUrl = []
-			$(self.config.imageSelector).each(function() {
+			$(self.config.image).each(function() {
 				imageUrl.push(url.resolve(self.config.baseUrl,$(this).attr('src')))
 			})
-			//console.log(`正在采集${list[i]}`)
+			console.log(`正在采集${list[i]}`)
 			postPageImage = imageUrl
-			if($(self.config.imagePage)){
-				$(self.config.imagePage).each(function(index){
+			if($(self.config.isPage)){
+				$(self.config.contentPage).each(function(index){
 					if(index > 0){
 						const href = url.resolve(self.config.baseUrl,$(this).attr('href'))
 						//console.log(postPageUrl.indexOf(href))
@@ -127,7 +127,7 @@ Spider.prototype.getPost = async function(){
 
 				})
 			}
-
+			console.log(postPageImage)
 			postPage[list[i]] = {
 				page: postPageUrl
 			}
@@ -138,7 +138,9 @@ Spider.prototype.getPost = async function(){
 			}
 		})
 	}
-	await this.getPostByPaging(postPage)
+	if(this.config.isPage){
+		await this.getPostByPaging(postPage)
+	}
 
 	console.log('article')
 	console.log(this.article)
@@ -156,9 +158,9 @@ Spider.prototype.getImage = async function() {
 	const self = this
 	for (let i = 0; i < data.length; i++) {
 		await this.fetch(data[i]).then(function($) {
-			const title =  $(self.config.contentSelector.title).text()
+			const title =  $(self.config.title).text()
 			console.log()
-			$(self.config.imageSelector).each(function() {
+			$(self.config.image).each(function() {
 				imageUrl.push($(this).attr('src'))
 			})
 			self.images[data[i]] = {
@@ -184,12 +186,13 @@ Spider.prototype.downloadImage = async function() {
 //http函数
 Spider.prototype.fetch = async function(url) {
 	const self = this
-	//console.log(`正在爬取：${url}`)
+	console.log(`正在爬取：${url}`)
 	return new Promise((reslove, reject) => {
 		superagent
 			.get(url)
 			.set(header)
 			.end((err, res) => {
+				console.log('is error: ' +err)
 				err ? reject(err) : reslove(cheerio.load(res.text))
 			})
 	})
@@ -198,19 +201,17 @@ Spider.prototype.fetch = async function(url) {
 
 
 const spider = new Spider({
-	baseUrl: 'http://pic.people.com.cn/GB/159992/',
-	pageUrl: 'http://pic.people.com.cn/GB/159992/index%%.html',
-	start: 1,
-	end:2,
-	chartset:'GB2312',
-	pageSelector: '.img_box a',
-	contentSelector:{
-		title: 'h1',
-		content: '#main_content',
-		image:'.box_con img'
-	},
-	imagePage: '.zdfy a',
-	imageSelector: '.box_con img'
+	baseUrl: 'http://www.jpmsg.com/',
+	pageUrl: 'http://www.jpmsg.com/meinv/nzmt_%%.html',
+	start: 199,
+	end:199,
+	chartset:'gb2312',
+	pageSelector: '.presently_li>a',
+	title: '.bttitke h2',
+	content: '#MyContent',
+	image: '#MyContent img',
+	isPage: false,
+	contentPage: null
 })
 spider.start()
 
