@@ -182,7 +182,7 @@ Spider.prototype.downloadImage = async function() {
 		content = await this.getPost()
 	}
 	const { data } = content
-	return
+	console.log(data)
 	for(let key in data) {  
 	    Promise.all(data[key].image.map(x => download(x, 'pic'))).then(() => {
 			console.log(data[key].title+'下载完成');
