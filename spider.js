@@ -136,6 +136,8 @@ Spider.prototype.getPost = async function(){
 				content,
 				image: postPageImage
 			}
+		}).catch(function(err){
+			console.log('140 error:'+err)
 		})
 	}
 	if(this.config.isPage){
@@ -159,7 +161,6 @@ Spider.prototype.getImage = async function() {
 	for (let i = 0; i < data.length; i++) {
 		await this.fetch(data[i]).then(function($) {
 			const title =  $(self.config.title).text()
-			console.log()
 			$(self.config.image).each(function() {
 				imageUrl.push($(this).attr('src'))
 			})
@@ -174,12 +175,17 @@ Spider.prototype.getImage = async function() {
 }
 //下载图片
 Spider.prototype.downloadImage = async function() {
-	const content = await this.getImage()
-	const { images } = content
+	let content 
+	if(this.config.isPage) {
+		content = await this.getImage()
+	}else {
+		content = await this.getPost()
+	}
+	const { data } = content
 	return
-	for(let key in images) {  
-	    Promise.all(images[key].url.map(x => download(x, 'pic'))).then(() => {
-			console.log(images[key].title+'下载完成');
+	for(let key in data) {  
+	    Promise.all(data[key].image.map(x => download(x, 'pic'))).then(() => {
+			console.log(data[key].title+'下载完成');
 		})
 	}
 }
@@ -191,10 +197,7 @@ Spider.prototype.fetch = async function(url) {
 		superagent
 			.get(url)
 			.set(header)
-			.end((err, res) => {
-				console.log('is error: ' +err)
-				err ? reject(err) : reslove(cheerio.load(res.text))
-			})
+			.end((err, res) =>  err ? reject(err) : reslove(cheerio.load(res.text)))
 	})
 	.catch((err) => { console.log(err) })
 }
