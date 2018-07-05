@@ -5,6 +5,9 @@
   "main": "index.js",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
+    "hapi": "^17.5.2",
+    "mysql2": "^1.5.3",
+    "cheerio": "^1.0.0-rc.2",
     "download": "^7.0.0",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
