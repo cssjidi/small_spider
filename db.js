@@ -23,7 +23,7 @@ function db () {
 
 db.prototype.query = async function(sql) {
     this.connection.execute(sql,'',function(err,rows){
-      console.log(err,rows)
+      console.log(sql,err,rows)
       return new Promise(function(resolve,reject){
         err ? reject(err) : resolve(rows)
       })

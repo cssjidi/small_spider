@@ -6,7 +6,7 @@ const cheerio = require('cheerio')
 const iconv = require('iconv-lite')
 const url = require('url')
 const download = require('download')
-const db = require('./db')
+const model = require('./model')
 
 const server = Hapi.server({
     port: 1000,
@@ -35,10 +35,11 @@ server.route({
     method: 'GET',
     path: '/page',
     handler: async (request, h) => {
-        const rest = await db.query('SELECT * FROM link').then(function(data){
+        const rest = model.demo
+        //console.log(rest.findAll({ limit: 10 }))
+        rest.findAll({ limit: 10 }).then(function(data){
         	console.log(data)
         })
-        console.log(rest)
         return 404;
     }
 });
