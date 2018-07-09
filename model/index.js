@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const demo = require('./demo')
+const link = require('./link')
 
 const sequelize = new Sequelize('shortLink', 'root', 'root', {
   host: 'localhost',
@@ -16,7 +16,7 @@ const sequelize = new Sequelize('shortLink', 'root', 'root', {
 });
 
 const model = {
-	demo: demo(sequelize),
+	link: new link(sequelize),
 }
 
 module.exports = model

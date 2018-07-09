@@ -6,7 +6,40 @@ const cheerio = require('cheerio')
 const iconv = require('iconv-lite')
 const url = require('url')
 const download = require('download')
+const crypto = require('crypto')
+const QRCode = require('qrcode')
+
 const model = require('./model')
+
+function shorturl(input) {
+	const md5 = crypto.createHash('md5')
+	const base32 = [
+	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+	'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+	'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+	'y', 'z', '0', '1', '2', '3', '4', '5'
+	];
+	const hex = md5.update(input).digest('hex');
+	const hexLen = hex.length;
+	const subHexLen = hexLen / 8;
+	const output = [];
+	
+	for (let i = 0; i < subHexLen; i++) {
+		//把加密字符按照8位一组16进制与0x3FFFFFFF(30位1)进行位与运算
+		const subHex = hex.substr(i * 8, 8);
+		let int = 0x3FFFFFFF & (1 * ('0x' + subHex));
+		
+		let out = '';
+		for (let j = 0; j < 6; j++) {
+			//把得到的值与0x0000001F进行位与运算，取得字符数组chars索引
+			const val = 0x0000001F & int;
+			out += base32[val];
+			int = int >> 5;
+		}
+		output.push(out);
+	}
+	return output[0];
+}
 
 const server = Hapi.server({
     port: 1000,
@@ -35,12 +68,36 @@ server.route({
     method: 'GET',
     path: '/page',
     handler: async (request, h) => {
-        const rest = model.demo
+        //const rest = model.demo
         //console.log(rest.findAll({ limit: 10 }))
-        rest.findAll({ limit: 10 }).then(function(data){
-        	console.log(data)
-        })
-        return 404;
+        // const data = await rest.findAll({ limit: 10 }).then(function(data){
+        // 	return data
+        // })
+        return shorturl('12341234');
+    }
+});
+
+server.route({
+    method: 'post',
+    path: '/api/link',
+    handler: async (req, h) => {
+    	const { url } = req.payload
+    	const code = shorturl(url)
+        const link = model.link
+        await link.save(code)
+        const uri = `http://dc8.in/${code}`
+        const image = await QRCode.toDataURL(uri)
+		  .then(img => {
+		    return img
+		  })
+		  .catch(err => {
+		    console.error(err)
+		  })
+		const data = {
+			link: uri,
+			image
+		} 
+        return data
     }
 });
 
