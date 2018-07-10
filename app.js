@@ -8,6 +8,7 @@ const url = require('url')
 const download = require('download')
 const crypto = require('crypto')
 const QRCode = require('qrcode')
+const Spider = require('./spider')
 
 const model = require('./model')
 
@@ -134,6 +135,17 @@ server.route({
 			})
 			return JSON.stringify({images})
 		})
+		return rest
+	}
+});
+
+server.route({
+    method: 'POST',
+    path: '/api/posts',
+    handler: async (req, h) => {
+		const config = req.payload
+		const spider = new Spider(config)
+		const rest = await spider.start()
 		return rest
 	}
 });

@@ -4,6 +4,7 @@ const path = require('path')
 const download = require('download')
 const url = require('url')
 const iconv = require('iconv-lite')
+const mkdirp = require('mkdirp');
 
 const header = {
 	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -29,13 +30,13 @@ function Spider(options){
 	this.article = {}
 }
 //开始爬取
-Spider.prototype.start = function() {
+Spider.prototype.start = async function() {
 	this.init()
 }
 //自动载入下载图片
-Spider.prototype.init = function() {
+Spider.prototype.init = async function() {
 	//this.dowloadImage()
-	this.downloadImage()
+	this.getPost()
 }
 //获取分页列表
 Spider.prototype.getPostList = async function() {
@@ -143,7 +144,6 @@ Spider.prototype.getPost = async function(){
 	if(this.config.isPage){
 		await this.getPostByPaging(postPage)
 	}
-
 	console.log('article')
 	console.log(this.article)
 	console.log('article')
@@ -172,6 +172,25 @@ Spider.prototype.getImage = async function() {
 	}
 	console.log(this.images)
 	return this.images
+}
+Spider.prototype.fetchImage = async function(data){
+	for(let key in data) {  
+	    Promise.all(data[key].image.map(function(image){
+	    	mkdirp(data[key].title, function (err) {
+			    if (err) console.error(err)
+			});
+	    }))
+	    Promise.all(data[key].image.map(function(image,index){
+	    	const directory = 'photos/'+data[key].title;
+			mkdirp(directory, function (err) {
+			    if (err) console.error(err)
+			    download(image, directory).then(function(data){
+			    	console.log(`${directory}下载完成`)
+			    })
+			});
+		}))
+	}
+	return true
 }
 //下载图片
 Spider.prototype.downloadImage = async function() {
@@ -203,6 +222,9 @@ Spider.prototype.fetch = async function(url) {
 }
 
 
+module.exports = Spider
+
+/*
 const spider = new Spider({
 	baseUrl: 'http://www.jpmsg.com/',
 	pageUrl: 'http://www.jpmsg.com/meinv/nzmt_%%.html',
@@ -217,4 +239,4 @@ const spider = new Spider({
 	contentPage: null
 })
 spider.start()
-
+*/
