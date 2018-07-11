@@ -47,6 +47,8 @@ const server = Hapi.server({
     host: 'localhost'
 });
 
+await server.register(Nes);
+
 const header = {
 	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
 	"Accept-Encoding": "gzip, deflate, br",
@@ -119,7 +121,8 @@ server.route({
     method: 'POST',
     path: '/api/post',
     handler: (req, h) => {
-		const { url } = req.payload
+    	
+		/*const { url } = req.payload
 		let images = []
 		if(!url) return 404
 		const rest = fetch(url).then(function($){
@@ -135,7 +138,7 @@ server.route({
 			})
 			return JSON.stringify({images})
 		})
-		return rest
+		return rest*/
 	}
 });
 
@@ -152,7 +155,6 @@ server.route({
 
 
 const init = async () => {
-
     await server.start();
     console.log(`Server running at: ${server.info.uri}`);
 };

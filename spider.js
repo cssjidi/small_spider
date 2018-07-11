@@ -144,9 +144,6 @@ Spider.prototype.getPost = async function(){
 	if(this.config.isPage){
 		await this.getPostByPaging(postPage)
 	}
-	console.log('article')
-	console.log(this.article)
-	console.log('article')
 	return {
 		data: this.article,
 		images: this.images
