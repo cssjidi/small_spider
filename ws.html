@@ -23,20 +23,31 @@
 		    await client.connect();
 		};
 		start()
-		const msg = async (data) => {
-			const payload = await client.request({path: '/post',method: 'POST',payload:{name: data}});  // Can also request '/h'
-		    console.log(payload)
-		    return payload
+
+		const fetch = async (step,url) => {
+			step = step > 1 ? step : 1
+			const payload = await client.request({path: '/post',method: 'POST',payload:{step,url}});
 		}
 
 		client.onUpdate = (update) => {
-			$('.content').text(update)
+			for (var i = 0; i < update.length; i++) {
+				(async function(uri) {
+					const post = await fetchPage(uri)
+					console.log(update)
+				})(update[i])
+			}
 	    };
+
+	    const fetchPage = async (url) => {
+			const page = await fetch(2,url)
+			return page
+	    }
 		
 		$('button').on('click',async function(){
+			await fetch(1)
 			const data = $('input').val()
 			$('.content').text('正在获取')
-			const name = await msg(data)
+			//const name = await fetch(data)
 		})
 	});
 </script>

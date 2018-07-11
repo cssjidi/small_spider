@@ -21,12 +21,12 @@ function Spider(options){
 		chartset: 'utf-8'
 	})
 	this.url = options.pageUrl
-	this.pages = []
-	for (let i = options.start;i <= options.end;i++) {
-		this.pages.push(this.url.replace('%%',i))
-	}
+	//this.pages = []
+	// for (let i = options.start;i <= options.end;i++) {
+	// 	this.pages.push(this.url.replace('%%',i))
+	// }
 	this.images = {}
-	this.contentUrl = []
+	//this.contentUrl = []
 	this.article = {}
 }
 //开始爬取
@@ -36,7 +36,11 @@ Spider.prototype.start = async function() {
 //自动载入下载图片
 Spider.prototype.init = async function() {
 	//this.dowloadImage()
-	this.getPost()
+	this.pages = []
+	for (let i = this.config.start;i <= this.config.end;i++) {
+		this.pages.push(this.url.replace('%%',i))
+	}
+	return this.pages
 }
 //获取分页列表
 Spider.prototype.getPostList = async function() {
@@ -94,6 +98,81 @@ Spider.prototype.getPostByPaging = async function(list) {
 	}
 	//console.log(imageUrl)
 	return imageUrl
+}
+Spider.prototype.fetchPost = async function(uri) {
+	const self = this
+	this.contentUrl = []
+	await this.fetch(uri).then(function($) {
+		$(self.config.pageSelector).each(function() {
+			let href = $(this).attr('href')
+			if(href){
+				if(href.indexOf('http')===-1 && href){
+					href = url.resolve(self.config.baseUrl,href)
+					self.contentUrl.push(href)
+				}else{
+					self.contentUrl.push(href)
+				}
+			}
+			
+		})
+	})
+	console.log(this.contentUrl)
+	return {
+		success: true,
+		list: this.contentUrl
+	}
+}
+Spider.prototype.fetchPostImage = async function(uri){
+	console.log(url)
+	let title = ''
+	let content = ''
+	let imageUrl = []
+	let isPage = false
+	const self = this
+	let postPageImage = []
+	let postPageUrl = []
+	let postPage = {}
+	await this.fetch(uri).then(function($) {
+		isPage = $(self.config.isPage) ? true : false
+		title = $(self.config.title).text()
+		content = $(self.config.content).html()
+		imageUrl = []
+		console.log(self.config.image)
+		$(self.config.image).each(function() {
+			imageUrl.push(url.resolve(self.config.baseUrl,$(this).attr('src')))
+		})
+		console.log(`正在采集${uri}`)
+		console.log(imageUrl)
+		postPageImage = imageUrl
+		if($(self.config.isPage)){
+			$(self.config.contentPage).each(function(index){
+				if(index > 0){
+					const href = url.resolve(self.config.baseUrl,$(this).attr('href'))
+					//console.log(postPageUrl.indexOf(href))
+					postPageUrl.indexOf(href) === -1 && postPageUrl.push(href)
+				}
+
+			})
+		}
+		console.log(postPageImage)
+		postPage[uri] = {
+			page: postPageUrl
+		}
+		self.article[uri] = {
+			title,
+			content,
+			image: postPageImage
+		}
+	}).catch(function(err){
+		console.log('140 error:'+err)
+	})
+	if(this.config.isPage){
+		await this.getPostByPaging(postPage)
+	}
+	return {
+		data: this.article,
+		images: this.images
+	}
 }
 //获取详情
 Spider.prototype.getPost = async function(){
@@ -208,7 +287,7 @@ Spider.prototype.downloadImage = async function() {
 //http函数
 Spider.prototype.fetch = async function(url) {
 	const self = this
-	console.log(`正在爬取：${url}`)
+	//console.log(`正在爬取：${url}`)
 	return new Promise((reslove, reject) => {
 		superagent
 			.get(url)

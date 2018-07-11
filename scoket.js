@@ -11,7 +11,7 @@ const spider = new Spider({
 	baseUrl: 'http://www.jpmsg.com/',
 	pageUrl: 'http://www.jpmsg.com/meinv/nzmt_%%.html',
 	start: 199,
-	end:199,
+	end:200,
 	chartset:'gb2312',
 	pageSelector: '.presently_li>a',
 	title: '.bttitke h2',
@@ -43,19 +43,27 @@ const start = async () => {
         path: '/post',
         config: {
             handler: async (request, h) => {
-				const post = await fetchPost() 	
-            	await request.socket.send(post)
+            	const { step, url } = request.payload
+            	//console.log(step,url)
+            	if(step === 1){
+            		const post = await spider.init()
+            		await request.socket.send(post)
+            	}else if(step === 2){
+            		const post = await spider.fetchPost(url) 
+                    console.log(post)
+            		await request.socket.send(post.list)
+            	}
+				
                 return 'world!';
             }
         }
     });
-
     await server.start();
 };
 
-const fetchPost = async () => {
-	return await spider.getPost()
-}
+// const fetchPost = async () => {
+// 	return await spider.init()
+// }
 
 const things = async () => {
 	var Things = ['a','b','c','d','e','f','x','y','t']
