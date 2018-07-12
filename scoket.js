@@ -7,19 +7,35 @@ const server = new Hapi.Server({
     host: 'localhost'
 });
 
+// const spider = new Spider({
+// 	baseUrl: 'http://www.jpmsg.com/',
+// 	pageUrl: 'http://www.jpmsg.com/meinv/nzmt_%%.html',
+// 	start: 199,
+// 	end:200,
+// 	chartset:'gb2312',
+// 	pageSelector: '.presently_li>a',
+// 	title: '.bttitke h2',
+// 	content: '#MyContent',
+// 	image: '#MyContent img',
+// 	isPage: false,
+// 	contentPage: null
+// })
+
 const spider = new Spider({
 	baseUrl: 'http://www.jpmsg.com/',
-	pageUrl: 'http://www.jpmsg.com/meinv/nzmt_%%.html',
-	start: 199,
-	end:200,
+	pageUrl: 'http://www.yokamen.cn/luxury/',
+	// start: 199,
+	// end:200,
 	chartset:'gb2312',
-	pageSelector: '.presently_li>a',
-	title: '.bttitke h2',
-	content: '#MyContent',
-	image: '#MyContent img',
+	pageSelector: '.g-list .tit a',
+	title: '.gLeft h1',
+	content: '.textCon',
+	image: '.textCon img',
 	isPage: false,
 	contentPage: null
 })
+
+
 
 const start = async () => {
 	await server.register(Nes);
@@ -44,17 +60,38 @@ const start = async () => {
         config: {
             handler: async (request, h) => {
             	const { step, url } = request.payload
-            	//console.log(step,url)
+            	console.log(step,url)
             	if(step === 1){
             		const post = await spider.init()
-            		await request.socket.send(post)
+            		await request.socket.send({step,post})
             	}else if(step === 2){
-            		const post = await spider.fetchPost(url) 
-                    console.log(post)
-            		await request.socket.send(post.list)
+            		const post = await spider.fetchPost(url)
+            		if(post.length > 0){ 
+            			console.log(post)
+		            	await request.socket.send({step,post})
+		            }
+            	}else if(step === 3){
+            		const post = await spider.fetchImage(url)
+            		if(post.length > 0){
+            			console.log(post)
+		            	await request.socket.send({step,post})
+		            }
             	}
-				
-                return 'world!';
+            	return 'hello'
+            }
+        }
+    });
+    server.route({
+        method: 'POST',
+        path: '/image',
+        config: {
+            handler: async (request, h) => {
+            	const { title, image } = request.payload
+        		const post = await spider.downloadImage(title,image)
+        		if(post){
+	            	await request.socket.send({step:4,post: true})
+	            }
+            	return 'hello'
             }
         }
     });

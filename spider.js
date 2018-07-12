@@ -1,5 +1,6 @@
 ﻿const cheerio = require('cheerio')
 const superagent = require('superagent');
+require('superagent-charset')(superagent)
 const path = require('path')
 const download = require('download')
 const url = require('url')
@@ -37,8 +38,12 @@ Spider.prototype.start = async function() {
 Spider.prototype.init = async function() {
 	//this.dowloadImage()
 	this.pages = []
-	for (let i = this.config.start;i <= this.config.end;i++) {
-		this.pages.push(this.url.replace('%%',i))
+	if(this.config.start){
+		for (let i = this.config.start;i <= this.config.end;i++) {
+			this.pages.push(this.url.replace('%%',i))
+		}
+	}else{
+		this.pages.push(this.url)
 	}
 	return this.pages
 }
@@ -105,6 +110,7 @@ Spider.prototype.fetchPost = async function(uri) {
 	await this.fetch(uri).then(function($) {
 		$(self.config.pageSelector).each(function() {
 			let href = $(this).attr('href')
+
 			if(href){
 				if(href.indexOf('http')===-1 && href){
 					href = url.resolve(self.config.baseUrl,href)
@@ -116,11 +122,62 @@ Spider.prototype.fetchPost = async function(uri) {
 			
 		})
 	})
-	console.log(this.contentUrl)
-	return {
-		success: true,
-		list: this.contentUrl
-	}
+	//console.log('spider:'+this.contentUrl)
+	//if(this.contentUrl.length === 0) return
+	return this.contentUrl
+}
+Spider.prototype.fetchImage = async function(uri){
+	let title = ''
+	let content = ''
+	let imageUrl = []
+	let isPage = false
+	const self = this
+	let postPageImage = []
+	let postPageUrl = []
+	let postPage = {}
+	this.article = []
+	await this.fetch(uri).then(function($) {
+		isPage = $(self.config.isPage) ? true : false
+		title = $(self.config.title).text()
+		content = $(self.config.content).html()
+		imageUrl = []
+		console.log(self.config.image)
+		$(self.config.image).each(function() {
+			imageUrl.push(url.resolve(self.config.baseUrl,$(this).attr('src')))
+		})
+		console.log(`正在采集${uri}`)
+		postPageImage = imageUrl
+		if($(self.config.isPage)){
+			$(self.config.contentPage).each(function(index){
+				if(index > 0){
+					const href = url.resolve(self.config.baseUrl,$(this).attr('href'))
+					//console.log(postPageUrl.indexOf(href))
+					postPageUrl.indexOf(href) === -1 && postPageUrl.push(href)
+				}
+
+			})
+		}
+		//console.log(postPageImage)
+		// postPage[uri] = {
+		// 	page: postPageUrl
+		// }
+		// const article = {
+		// 	title,
+		// 	content,
+		// 	image: postPageImage
+		// }
+		self.article.push({
+			title,
+			content,
+			image: postPageImage
+		})
+	}).catch(function(err){
+		console.log('140 error:'+err)
+	})
+	// if(this.config.isPage){
+	// 	await this.getPostByPaging(postPage)
+	// }
+	return this.article
 }
 Spider.prototype.fetchPostImage = async function(uri){
 	console.log(url)
@@ -142,7 +199,6 @@ Spider.prototype.fetchPostImage = async function(uri){
 			imageUrl.push(url.resolve(self.config.baseUrl,$(this).attr('src')))
 		})
 		console.log(`正在采集${uri}`)
-		console.log(imageUrl)
 		postPageImage = imageUrl
 		if($(self.config.isPage)){
 			$(self.config.contentPage).each(function(index){
@@ -154,7 +210,6 @@ Spider.prototype.fetchPostImage = async function(uri){
 
 			})
 		}
-		console.log(postPageImage)
 		postPage[uri] = {
 			page: postPageUrl
 		}
@@ -207,7 +262,6 @@ Spider.prototype.getPost = async function(){
 
 				})
 			}
-			console.log(postPageImage)
 			postPage[list[i]] = {
 				page: postPageUrl
 			}
@@ -249,27 +303,22 @@ Spider.prototype.getImage = async function() {
 	console.log(this.images)
 	return this.images
 }
-Spider.prototype.fetchImage = async function(data){
-	for(let key in data) {  
-	    Promise.all(data[key].image.map(function(image){
-	    	mkdirp(data[key].title, function (err) {
-			    if (err) console.error(err)
-			});
-	    }))
-	    Promise.all(data[key].image.map(function(image,index){
-	    	const directory = 'photos/'+data[key].title;
-			mkdirp(directory, function (err) {
-			    if (err) console.error(err)
-			    download(image, directory).then(function(data){
-			    	console.log(`${directory}下载完成`)
-			    })
-			});
-		}))
-	}
+Spider.prototype.downloadImage = async function(title,image){
+	console.log(image)
+    Promise.all(image.map(function(img,index){
+    	const directory = 'photos/'+title;
+		mkdirp(directory, function (err) {
+		    if (err) console.error(err)
+		    console.log(img)
+		    download(img, directory).then(function(data){
+		    	console.log(`${directory}下载完成`)
+		    })
+		});
+	}))
 	return true
 }
 //下载图片
-Spider.prototype.downloadImage = async function() {
+Spider.prototype.downloadImage_old = async function() {
 	let content 
 	if(this.config.isPage) {
 		content = await this.getImage()
@@ -287,16 +336,23 @@ Spider.prototype.downloadImage = async function() {
 //http函数
 Spider.prototype.fetch = async function(url) {
 	const self = this
-	//console.log(`正在爬取：${url}`)
 	return new Promise((reslove, reject) => {
 		superagent
 			.get(url)
+			.charset(self.config.charset)
 			.set(header)
 			.end((err, res) =>  err ? reject(err) : reslove(cheerio.load(res.text)))
 	})
 	.catch((err) => { console.log(err) })
 }
 
+Spider.prototype.corvert = async function(str){
+	const buf = new Buffer(str, this.config.chartset);
+	buf.write(str, this.config.chartset);
+	str = buf.toString(this.config.chartset);
+	///iconv.decode(buf);
+	return str
+}
 
 module.exports = Spider
 

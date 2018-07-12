@@ -20,7 +20,8 @@
     "pg-hstore": "^2.3.2",
     "qrcode": "^1.2.0",
     "sequelize": "^4.38.0",
-    "superagent": "^3.8.3"
+    "superagent": "^3.8.3",
+    "superagent-charset": "^1.2.0"
   },
   "devDependencies": {},
   "scripts": {
