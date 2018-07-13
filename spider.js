@@ -6,6 +6,7 @@ const download = require('download')
 const url = require('url')
 const iconv = require('iconv-lite')
 const mkdirp = require('mkdirp');
+const fs = require('fs')
 
 const header = {
 	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -141,7 +142,6 @@ Spider.prototype.fetchImage = async function(uri){
 		title = $(self.config.title).text()
 		content = $(self.config.content).html()
 		imageUrl = []
-		console.log(self.config.image)
 		$(self.config.image).each(function() {
 			imageUrl.push(url.resolve(self.config.baseUrl,$(this).attr('src')))
 		})
@@ -180,7 +180,6 @@ Spider.prototype.fetchImage = async function(uri){
 	return this.article
 }
 Spider.prototype.fetchPostImage = async function(uri){
-	console.log(url)
 	let title = ''
 	let content = ''
 	let imageUrl = []
@@ -194,7 +193,6 @@ Spider.prototype.fetchPostImage = async function(uri){
 		title = $(self.config.title).text()
 		content = $(self.config.content).html()
 		imageUrl = []
-		console.log(self.config.image)
 		$(self.config.image).each(function() {
 			imageUrl.push(url.resolve(self.config.baseUrl,$(this).attr('src')))
 		})
@@ -303,20 +301,49 @@ Spider.prototype.getImage = async function() {
 	console.log(this.images)
 	return this.images
 }
-Spider.prototype.downloadImage = async function(title,image){
-	console.log(image)
-    Promise.all(image.map(function(img,index){
-    	const directory = 'photos/'+title;
-		mkdirp(directory, function (err) {
-		    if (err) console.error(err)
-		    console.log(img)
-		    download(img, directory).then(function(data){
-		    	console.log(`${directory}下载完成`)
-		    })
-		});
-	}))
-	return true
+Spider.prototype.createDirectory = async function(title){
+	const directory = 'photos/'+title;
+	try{
+		fs.statSync(path.join(__dirname,directory))
+	}catch(e){
+		mkdirp.sync(path.join(__dirname,directory))
+	}
+	return path.join(__dirname,directory)
 }
+Spider.prototype.downloadImage = async function(title,image){
+	const directory = await this.createDirectory(title)
+	console.log(`第315行：${directory}`)
+	Promise.all(image.map(x => download(x, directory))).then(() => {
+	    console.log(`${title}下载完成`);
+	    return true
+	});
+	return true
+	// return true
+	// if (!fs.existsSync(directory)){
+	//     fs.mkdirSync(dir);
+	// }
+	// mkdirp(directory, function (err) {
+
+	// })
+	// console.log(image)
+ //    Promise.all(image.map(function(img,index){
+ //    	const directory = 'photos/'+title;
+	// 	mkdirp(directory, function (err) {
+	// 	    if (err) console.error(err)
+	// 	    download(img, directory).then(function(data){
+	// 	    	console.log(`${directory}下载完成`)
+	// 	    }).catch(function(err){
+	// 	    	console.log(err)
+	// 	    })
+	// 	});
+	// }))
+	// return true
+}
+
+Spider.prototype.end = async function(){
+
+}
+
 //下载图片
 Spider.prototype.downloadImage_old = async function() {
 	let content 

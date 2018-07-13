@@ -60,20 +60,17 @@ const start = async () => {
         config: {
             handler: async (request, h) => {
             	const { step, url } = request.payload
-            	console.log(step,url)
             	if(step === 1){
             		const post = await spider.init()
             		await request.socket.send({step,post})
             	}else if(step === 2){
             		const post = await spider.fetchPost(url)
             		if(post.length > 0){ 
-            			console.log(post)
 		            	await request.socket.send({step,post})
 		            }
             	}else if(step === 3){
             		const post = await spider.fetchImage(url)
             		if(post.length > 0){
-            			console.log(post)
 		            	await request.socket.send({step,post})
 		            }
             	}
@@ -88,6 +85,7 @@ const start = async () => {
             handler: async (request, h) => {
             	const { title, image } = request.payload
         		const post = await spider.downloadImage(title,image)
+        		console.log(post)
         		if(post){
 	            	await request.socket.send({step:4,post: true})
 	            }

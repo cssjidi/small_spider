@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ws</title>
+	<script type="text/javascript" src="https://cdn.bootcss.com/require.js/2.3.5/require.min.js
+"></script>
+
+</head>
+<body>
+	<input type="text" name="input">
+	<button type="button">submit</button>
+	<p class="content"></p>
+<script type="text/javascript">
+	require.config({
+	    baseUrl:"./js/",
+	    paths: {
+	        "jquery": "jquery.min",
+	    }
+	});
+	require(['jquery',"./client"], function($,Nes) {
+	    var client = new Nes.Client('ws://localhost:1000');
+	    var article = {}
+		const cjd = {
+			fetch: async (step,uri) => {
+				step = step > 1 ? step : 1
+				const payload = await client.request({path: '/post',method: 'POST',payload:{step,url: uri}});
+			},
+			download: async (title,image) => {
+				const payload = await client.request({path: '/image',method: 'POST',payload:{title,image}});
+			},
+			getUrl: async (step,uri) => {
+				for (var i = 0; i < uri.length; i++) {
+					(async function(s,r){
+						const post = await cjd.fetch(s,r)
+						return post
+					}(step,uri[i]))
+				}
+			},
+			getImage: async (image) => {
+				for (var i = 0; i < image.length; i++) {
+					(async function(s){
+						const post = await cjd.download(s.title,s.image)
+						return post
+					}(image[i]))
+				}
+			}
+		}
+		const start = async () => {
+		    await client.connect();
+		};
+		start()
+
+		const fetch = async (step,url) => {
+			step = step > 1 ? step : 1
+			const payload = await client.request({path: '/post',method: 'POST',payload:{step,url}});
+		}
+		client.onError = (err) => {
+			console.log(err)
+		}
+		client.onUpdate = (update) => {
+			const { step, post } = update
+			console.log('client')
+			console.log(step, post)
+			//cjd.getUrl(2,post)
+			if(step === 1){
+				$('.content').text(`正在获取第${step}页`)
+				console.log(post)
+				cjd.getUrl(2,post)
+			}
+			if(step === 2){
+				$('.content').text(`正在获取第${step}页`)
+				console.log(post)
+				cjd.getUrl(3,post)
+			}
+			if(step === 3){
+				$('.content').text(`正在获取第${step}页`)
+				console.log(post)
+				cjd.getImage(post)
+			}
+			console.log('client')
+			// for (var i = 0; i < update.length; i++) {cx
+			// 	(async function(uri) {
+			// 		if(update.length === 0) return
+			// 		const post = await fetchPage(uri)
+			// 		console.log(update)
+			// 	})(update[i])
+			// }
+	    };
+
+	    const fetchPage = async (url) => {
+			const page = await fetch(2,url)
+			return page
+	    }
+		
+		$('button').on('click',async function(){
+			await cjd.fetch(1)
+			const data = $('input').val()
+			//$('.content').text('正在获取')
+			//const name = await fetch(data)
+		})
+	});
+</script>
+</body>
+</html>
