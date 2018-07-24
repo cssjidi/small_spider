@@ -9,7 +9,7 @@ const download = require('download')
 const crypto = require('crypto')
 const QRCode = require('qrcode')
 const Spider = require('./spider')
-const IO = require('hapi-io')
+
 
 const model = require('./model')
 
@@ -48,9 +48,6 @@ const server = Hapi.server({
     host: 'localhost'
 });
 
-server.register({
-	register: require('hapi-io')
-});
 
 const header = {
 	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -143,8 +140,7 @@ server.route({
     method: 'POST',
     path: '/api/post',
     handler: (req, h) => {
-    	
-		/*const { url } = req.payload
+		const { url } = req.payload
 		let images = []
 		if(!url) return 404
 		const rest = fetch(url).then(function($){
@@ -160,7 +156,7 @@ server.route({
 			})
 			return JSON.stringify({images})
 		})
-		return rest*/
+		return rest
 	}
 });
 
