@@ -1,58 +1,56 @@
 'use strict';
-
-const Hapi = require('hapi');
-const superagent = require('superagent');
-const url = require('url')
+const express = require('express');
+const app = express();
 const crypto = require('crypto')
-
-const server = Hapi.server({
-    port: 1000,
-    host: 'localhost'
-});
-const TOKEN = 'weixin'
-function checkSignature(payload)
-{
-	const { signature, timestamp, nonce } = payload
-    const token = TOKEN
-    const tmpArr = [token, timestamp, nonce]
-    sort(tmpArr)
-    tmpStr = tmpArr.join()
-    tmpStr = crypto.createHmac('sha1').update(tmpStr).digest('hex') 
-    console.log(tmpStr)
-    if(tmpStr == signature){
-        return true;
-    }else{
-        return false;
-    }
-}
-
-const header = {
-	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-	"Accept-Encoding": "gzip, deflate, br",
-	"Accept-Language": "zh-CN,zh;q=0.8",
-	"Cache-Control": "max-age=0",
-	"Connection": "keep-alive",
-	"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
-}
-
-server.route({
-    method: 'GET',
-    path: '/',
-    handler: (request, h) => {
-    	const payload = req
-    	const rest = db.query('SELECT * FROM link')	
-        return rest;
-    }
-});
-
-const init = async () => {
-    await server.start();
-    console.log(`Server running at: ${server.info.uri}`);
+const wechat = require('wechat');
+const config = {
+  token: 'wechat',
+  appid: 'wxc98afaaa54715ddc',
+  encodingAESKey: 'bjPGbhD3mpQJqCbZNKTkPcTq7j529PerxgLwy41KI5u',
+  checkSignature: true // 可选，默认为true。由于微信公众平台接口调试工具在明文模式下不发送签名，所以如要使用该测试工具，请将其设置为false
 };
 
-process.on('unhandledRejection', (err) => {
-    console.log(err);
-    process.exit(1);
-});
+app.use(express.query());
+app.use('/', wechat(config, function (req, res, next) {
+  // 微信输入信息都在req.weixin上
+  var message = req.weixin;
+  if (message.FromUserName === 'diaosi') {
+    // 回复屌丝(普通回复)
+    res.reply('hehe');
+  } else if (message.FromUserName === 'text') {
+    //你也可以这样回复text类型的信息
+    res.reply({
+      content: 'text object',
+      type: 'text'
+    });
+  } else if (message.FromUserName === 'hehe') {
+    // 回复一段音乐
+    res.reply({
+      type: "music",
+      content: {
+        title: "来段音乐吧",
+        description: "一无所有",
+        musicUrl: "http://mp3.com/xx.mp3",
+        hqMusicUrl: "http://mp3.com/xx.mp3",
+        thumbMediaId: "thisThumbMediaId"
+      }
+    });
+  } else {
+    // 回复高富帅(图文回复)
+    res.reply([
+      {
+        title: '你来我家接我吧',
+        description: '这是女神与高富帅之间的对话',
+        picurl: 'http://nodeapi.cloudfoundry.com/qrcode.jpg',
+        url: 'http://nodeapi.cloudfoundry.com/'
+      }
+    ]);
+  }
+}));
 
-init();
+const server = app.listen(3000, function () {
+  var host = server.address().address;
+  var port = server.address().port;
+
+  console.log('Example app listening at http://%s:%s', host, port);
+});
