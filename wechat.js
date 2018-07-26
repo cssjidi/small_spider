@@ -34,7 +34,6 @@ app.use('/', wechat(config, function (req, res, next) {
 	         "name":"赞一下我们",
 	         "key":"V1001_GOOD"
 	       }]
-	     }]
 	   }
 	 ]
 	}, function(data){
