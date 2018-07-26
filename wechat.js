@@ -3,6 +3,10 @@ const express = require('express');
 const app = express();
 const crypto = require('crypto')
 const wechat = require('wechat');
+const WechatAPI = require('wechat-api');
+
+const api = new WechatAPI('wxc98afaaa54715ddc', '79fa3f304aa233f866c997dcba81fa1c');
+
 const config = {
   token: 'wechat',
   appid: 'wxc98afaaa54715ddc',
@@ -10,11 +14,7 @@ const config = {
   checkSignature: false // 可选，默认为true。由于微信公众平台接口调试工具在明文模式下不发送签名，所以如要使用该测试工具，请将其设置为false
 };
 
-app.use(express.query());
-app.use('/', wechat(config, function (req, res, next) {
-  // 微信输入信息都在req.weixin上
-  var message = req.weixin;
-	res.createMenu({
+api.createMenu({
 	 "button":[
 	   {
 	     "type":"click",
@@ -39,6 +39,12 @@ app.use('/', wechat(config, function (req, res, next) {
 	}, function(data){
 		console.log(data)
 	});
+
+app.use(express.query());
+app.use('/', wechat(config, function (req, res, next) {
+  // 微信输入信息都在req.weixin上
+  var message = req.weixin;
+	
   if (message.FromUserName === 'diaosi') {
     // 回复屌丝(普通回复)
     res.reply('hehe');
