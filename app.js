@@ -145,7 +145,7 @@ server.route({
 		if(!url) return 404
 		const rest = fetch(url).then(function($){
 			$('img').each(function(){
-				let src = $(this).attr('src')
+				let src = $(this).attr('src') || $(this).attr('file')
 				if(src.indexOf('http') === -1){
 					src = 'https:' + src;
 				}
