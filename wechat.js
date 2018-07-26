@@ -37,7 +37,9 @@ app.use('/', wechat(config, function (req, res, next) {
 	     }]
 	   }
 	 ]
-	}, callback);
+	}, function(data){
+		console.log(data)
+	});
   if (message.FromUserName === 'diaosi') {
     // 回复屌丝(普通回复)
     res.reply('hehe');
