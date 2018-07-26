@@ -3,17 +3,48 @@ const express = require('express');
 const app = express();
 const crypto = require('crypto')
 const wechat = require('wechat');
+const WechatAPI = require('wechat-api');
+
+const api = new WechatAPI('wxc98afaaa54715ddc', '79fa3f304aa233f866c997dcba81fa1c');
+
 const config = {
   token: 'wechat',
   appid: 'wxc98afaaa54715ddc',
   encodingAESKey: 'bjPGbhD3mpQJqCbZNKTkPcTq7j529PerxgLwy41KI5u',
-  checkSignature: true // 可选，默认为true。由于微信公众平台接口调试工具在明文模式下不发送签名，所以如要使用该测试工具，请将其设置为false
+  checkSignature: false // 可选，默认为true。由于微信公众平台接口调试工具在明文模式下不发送签名，所以如要使用该测试工具，请将其设置为false
 };
+
+api.createMenu({
+	 "button":[
+	   {
+	     "type":"click",
+	     "name":"今日歌曲",
+	     "key":"V1001_TODAY_MUSIC"
+	   },
+	   {
+	     "name":"菜单",
+	     "sub_button":[
+	       {
+	         "type":"view",
+	         "name":"搜索",
+	         "url":"http://www.soso.com/"
+	       },
+	       {
+	         "type":"click",
+	         "name":"赞一下我们",
+	         "key":"V1001_GOOD"
+	       }]
+	   }
+	 ]
+	}, function(data){
+		console.log(data)
+	});
 
 app.use(express.query());
 app.use('/', wechat(config, function (req, res, next) {
   // 微信输入信息都在req.weixin上
   var message = req.weixin;
+	
   if (message.FromUserName === 'diaosi') {
     // 回复屌丝(普通回复)
     res.reply('hehe');
