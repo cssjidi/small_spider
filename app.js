@@ -136,6 +136,22 @@ function fetch (url) {
 	.catch((err) => { console.log(err) })
 }
 
+
+function fetchBlob (url) {
+	var self = this
+	return new Promise((reslove, reject) => {
+		superagent
+			.get(url)
+			.set(header)
+			.responseType('blob')
+			.then((res) => {
+				return reslove(res.body)
+			})
+	})
+	.catch((err) => { console.log(err) })
+}
+
+
 server.route({
     method: 'POST',
     path: '/api/post',
@@ -145,7 +161,7 @@ server.route({
 		if(!url) return 404
 		const rest = fetch(url).then(function($){
 			$('img').each(function(){
-				let src = $(this).attr('src') || $(this).attr('file')
+				let src = $(this).attr('file') || $(this).attr('src')
 				if(src.indexOf('http') === -1){
 					src = 'https:' + src;
 				}
@@ -157,6 +173,27 @@ server.route({
 			return JSON.stringify({images})
 		})
 		return rest
+	}
+});
+
+server.route({
+    method: 'POST',
+    path: '/api/post/save',
+    handler: async (req, h) => {
+		const { image } = req.payload
+		const images= image.split(',')
+		let urls = []
+		if(!images) return 404
+		for(let i = 0;i < images.length; i++){
+			const uri = images[i]
+			await fetchBlob(uri).then(function($){
+				urls.push({
+					name: uri.slice(uri.lastIndexOf('/') + 1),
+					data: $
+				})
+			})
+		}
+		return JSON.stringify(urls)
 	}
 });
 
