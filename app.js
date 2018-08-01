@@ -143,9 +143,9 @@ function fetchBlob (url) {
 		superagent
 			.get(url)
 			.set(header)
-			.responseType('blob')
+			.responseType('arraybuffer')
 			.then((res) => {
-				return reslove(res.body)
+				return reslove(new Uint8Array(res.body))
 			})
 	})
 	.catch((err) => { console.log(err) })
@@ -181,11 +181,10 @@ server.route({
     path: '/api/post/save',
     handler: async (req, h) => {
 		const { image } = req.payload
-		const images= image.split(',')
 		let urls = []
-		if(!images) return 404
-		for(let i = 0;i < images.length; i++){
-			const uri = images[i]
+		if(!image) return 404
+		for(let i = 0;i < image.length; i++){
+			const uri = image[i]
 			await fetchBlob(uri).then(function($){
 				urls.push({
 					name: uri.slice(uri.lastIndexOf('/') + 1),
